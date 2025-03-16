@@ -15,50 +15,51 @@ st.header("Lançamento oblíquo")
 
 st.write("Entre os 3 tempos (segundos) e distâncias percorridas (metros) abaixo")
 
-col1,col2 = st.columns(2)
 
-with col1:
-    Tempo_1 = st.number_input("1o lançamento - tempo",
-                              min_value=0.,
-                              step = 0.01,
-                              format = "%.2f",
-                              label_visibility="visible"
-                              )
-    Tempo_2 = st.number_input("2o lançamento - tempo",
-                              min_value=0.,
-                              step = 0.01,
-                              format = "%.2f",
-                              label_visibility="visible"
-                              )
-    Tempo_3 = st.number_input("3o lançamento - tempo",
-                              min_value=0.,
-                              step = 0.01,
-                              format = "%.2f",
-                              label_visibility="visible"
-                              )
-    
-with col2:
-    Dist_1 = st.number_input("1o lançamento - distância",
-                              min_value=0.,
-                              step = 0.01,
-                              format = "%.2f",
-                              label_visibility="visible"
-                              )
-    
-    Dist_2 = st.number_input("2o lançamento - distância",
-                              min_value=0.,
-                              step = 0.01,
-                              format = "%.2f",
-                              label_visibility="visible"
-                              )
-    Dist_3 = st.number_input("3o lançamento - distância",
-                              min_value=0.,
-                              step = 0.01,
-                              format = "%.2f",
-                              label_visibility="visible"
-                              )    
+Tempo_1 = st.number_input("1o lançamento - tempo",
+                          min_value=0.,
+                          step = 0.01,
+                          format = "%.2f",
+                          label_visibility="visible"
+                          )
+Dist_1 = st.number_input("1o lançamento - distância",
+                      min_value=0.,
+                      step = 0.01,
+                      format = "%.2f",
+                      label_visibility="visible"
+                      )
 
+st.divider()
 
+Tempo_2 = st.number_input("2o lançamento - tempo",
+                          min_value=0.,
+                          step = 0.01,
+                          format = "%.2f",
+                          label_visibility="visible"
+                          )
+Dist_2 = st.number_input("2o lançamento - distância",
+                      min_value=0.,
+                      step = 0.01,
+                      format = "%.2f",
+                      label_visibility="visible"
+                      )
+
+st.divider()
+
+Tempo_3 = st.number_input("3o lançamento - tempo",
+                          min_value=0.,
+                          step = 0.01,
+                          format = "%.2f",
+                          label_visibility="visible"
+                          )
+Dist_3 = st.number_input("3o lançamento - distância",
+                      min_value=0.,
+                      step = 0.01,
+                      format = "%.2f",
+                      label_visibility="visible"
+                      )
+
+st.divider()
 
 
 
@@ -75,36 +76,38 @@ if st.button("Calcular"):
     st.write("Maior distância: %.2f m"%Dist_max)
     st.write("Tempo da maior distância: %.2f s"%Tempo)
 
-    # ALTURA MÁXIMA ATINGIDA
-    Altura = g*Tempo**2/8
-    st.write("Altura máxima atingida: %.2f m"%Altura)
+    # ANGULO
+    Ang = np.arctan((g*Tempo**2-2)/(2*Dist_max))
+    Ang_deg = np.degrees(Ang)
+    st.write("Ângulo de lançamento: %.1fº"%Ang_deg)
 
     # VELOCIDADE
-    Vel_x = Dist_max / Tempo
-    Vel_y = g*Tempo/2
-    Vel = np.sqrt(Vel_x*Vel_x+Vel_y*Vel_y)
+    Vel = Dist_max/(Tempo*np.cos(Ang))
     Vel_kmh = Vel*3.6
     st.write("Velocidade de lançamento: %.2f m/s = %.2f km/h"%(Vel,Vel_kmh))
-
-    # ANGULO
-    tantheta = Vel_y/Vel_x
-    theta = np.arctan(tantheta)
-    theta_deg = np.degrees(theta)
-    st.write("Ângulo de lançamento: %.1fº"%theta_deg)
+    Vel_x = Vel*np.cos(Ang)
+    Vel_y = Vel*np.sin(Ang)
     
+    # ALTURA MÁXIMA ATINGIDA
+    t1 = Vel_y/g
+    Altura = 1+Vel_y**2/(2*g)
+    st.write("Altura máxima atingida: %.2f m"%Altura)
+
     # GRAFICO
     fig,ax = plt.subplots()
     t = np.linspace(0,Tempo,100)
     x = Vel_x*t
-    y = Vel_y*t - g*t*t/2
+    y = Vel_y*t - g*t*t/2 + 1
     ax.plot(x,y,color="blue")
     ax.grid()
     ax.set_xlabel(r"$x$ (m)")
     ax.set_ylabel(r"$y$ (m)")
-    x0 = np.ones(2)*Dist_max/2
+    # ALTURA
+    x0 = np.ones(2)*Vel_x*t1
     y0 = [0,Altura]
     ax.plot(x0,y0,color="black",linewidth="2")
     ax.text(Dist_max/2,Altura/2," %.2f"%Altura)
+    # DISTANCIA MAXIMA
     x1 = [0,Dist_max]
     y1 = np.zeros(2)
     ax.plot(x1,y1,color="black",linewidth="2")
@@ -115,28 +118,36 @@ if st.button("Calcular"):
     # ANGULO
     Raio = Dist_max/5
     CompReta_y = Altura*.9
-    x2=[0,CompReta_y/np.tan(theta)]
-    y2=[0,CompReta_y]
-    ax.plot(x2,y2,color="red",linewidth="1")
     ylim = ax.get_ylim()
     xlim = ax.get_xlim()
     xscale = xlim[-1] - xlim[0]
     yscale = ylim[-1] - ylim[0]
     thetascale = np.arctan(Vel_y/Vel_x*xscale/yscale)
+    CompReta_x = CompReta_y/np.tan(Ang)
+    x2=[CompReta_x,0,CompReta_x]
+    y2=[1,1,1+CompReta_y]
+    ax.plot(x2,y2,color="red",linewidth="1")
     Nscale = 20
     t3 = np.linspace(0,thetascale,Nscale)
     x3 = Raio*np.cos(t3)
-    y3 = Raio*yscale/xscale*np.sin(t3)
+    y3 = Raio*yscale/xscale*np.sin(t3)+1
     ax.plot(x3,y3,color="red",linewidth="1")
-    ax.text(x3[Nscale//2],y3[Nscale//2],"%.1f°"%theta_deg,
+    ax.text(x3[Nscale//2],y3[Nscale//2],"%.1f°"%Ang_deg,
             verticalalignment="bottom",
             color="red"
             )
-    
+    #
     st.pyplot(fig)
+
+    
+    
+    
     
 
 # DESENVOLVIDO POR: MARCELO SCHRAMM E CIBELE LADEIA
 st.divider()
 st.caption("Desenvolvido por Marcelo Schramm e Cibele Aparecida Ladeia")
+
+
+
 
